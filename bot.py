@@ -6,10 +6,8 @@ from flask import Flask, request
 
 app = Flask(__name__)
 
-TOKEN = "8893160089:AAHWYLmFFv_sw7kvyKLRxrJnqI6pc26-7-Y"
-
+TOKEN = "8893160089:AAHWYLMfFv_sw7kvyKLRxrJnqI6pc26-7-Y"
 active_users = set()
-active_users.add("5908091045")
 
 # Настройки интервала отправки (в секундах). По умолчанию 5 минут (300 секунд).
 # Можно изменить через бота командой, например /interval 10
