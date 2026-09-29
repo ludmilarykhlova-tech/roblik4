@@ -4,7 +4,7 @@ import requests
 import threading
 from flask import Flask
 
-app = Flask(name)
+app = Flask(__name__)
 
 @app.route('/')
 def home():
