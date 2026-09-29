@@ -29,25 +29,22 @@ def send_telegram_message(text):
 
 def check_new_tokens():
     while True:
-        print("Проверка новых токенов...", flush=True)
+        print("Проверка новых токенов через GeckoTerminal...", flush=True)
         try:
-            url = "https://api.dexscreener.com/latest/dex/tokens/latest"
-            headers = {"User-Agent": "Mozilla/5.0"}
+            url = "https://api.geckoterminal.com/api/v2/networks/new_pools"
+            headers = {"Accept": "application/json;version=20230302"}
             response = requests.get(url, headers=headers, timeout=10)
             
             if response.status_code == 200:
                 data = response.json()
-                pairs = data.get("pairs", [])
-                for pair in pairs[:3]:
-                    chain = pair.get("chainId", "unknown").upper()
-                    dex = pair.get("dexId", "unknown")
-                    base_token = pair.get("baseToken", {})
-                    name = base_token.get("name", "Unknown")
-                    symbol = base_token.get("symbol", "???")
-                    address = pair.get("address", "")
+                pools = data.get("data", [])
+                for pool in pools[:3]:
+                    attributes = pool.get("attributes", {})
+                    name = attributes.get("name", "Unknown")
+                    address = attributes.get("address", "")
                     
-                    liquidity = pair.get("liquidity", {}).get("usd", 0)
-                    volume = pair.get("volume", {}).get("h24", 0)
+                    pool_id = pool.get("id", "")
+                    chain = pool_id.split("_")[0].upper() if "_" in pool_id else "UNKNOWN"
                     
                     token_id = f"{chain}_{address}"
                     
@@ -61,23 +58,20 @@ def check_new_tokens():
                         
                         message = (
                             f"*Обнаружен скачок токена!*\n\n"
-                            f"Токен: *{name}* (${symbol})\n"
-                            f"Сеть: *{chain}* ({dex})\n"
+                            f"Токен: *{name}*\n"
+                            f"Сеть: *{chain}*\n"
                             f"Контракт:\n{address}\n\n"
                             f"*Анализ сигнала:*\n"
                             f"Шанс роста: *{score} / 100* (Сильный потенциал)\n"
                             f"Прогнозируемый рост: *+{min_growth}% - +{max_growth}%*\n"
                             f"Текущая цена: *${price}*\n\n"
-                            f"*Метрики:*\n"
-                            f"Ликвидность: *${liquidity:,.0f}* (Залочена)\n"
-                            f"Объём (24h): *${volume:,.0f}*\n\n"
                             f"*Описание:*\n"
                             f"Зафиксирован мощный приток уникальных кошельков в пул ликвидности. Объём покупок превышает продажи.\n"
-                            f"[DexScreener](https://dexscreener.com/{chain.lower()}/{address})"
+                            f"[GeckoTerminal](https://www.geckoterminal.com/{chain.lower()}/pools/{address})"
                         )
                         
                         send_telegram_message(message)
-                        print(f"Отправлен сигнал для: {symbol}", flush=True)
+                        print(f"Отправлен сигнал для: {name}", flush=True)
             else:
                 print(f"Сайт ответил со статусом: {response.status_code}", flush=True)
         except Exception as e:
