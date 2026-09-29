@@ -8,7 +8,7 @@ app = Flask(__name__)
 
 # Твои данные
 TOKEN = "8893160089:AAHWYLMfFv_sw7kvyKLRxrJnqI6pc26-7-Y"
-"CHAT_ID = "5908091045"
+CHAT_ID = "5908091045"
 
 seen_tokens = set()
 
