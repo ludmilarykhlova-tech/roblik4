@@ -6,7 +6,6 @@ from flask import Flask, request
 
 app = Flask(__name__)
 
-# Твой токен бота
 TOKEN = "8893160089:AAHWYLmFFv_sw7kvyKLRxrJnqI6pc26-7-Y"
 
 active_users = set()
@@ -22,9 +21,7 @@ def webhook():
     if data and 'message' in data:
         chat_id = str(data['message']['chat']['id'])
         text = data['message'].get('text', '')
-        
         active_users.add(chat_id)
-        
         if text:
             reply = generate_ai_response(text)
             send_telegram_message_to(chat_id, reply)
@@ -32,12 +29,11 @@ def webhook():
 
 def generate_ai_response(text):
     text_lower = text.lower()
-    
     if '/start' in text_lower:
         return (
             "Привет! Я твой крипто-аналитик.\n"
-            "Я постоянно мониторю новые пулы ликвидности и присылаю сигналы в личку.\n"
-            "Спроси меня о чем угодно, например: *'Какая монета сейчас перспективная?'*"
+            "Я мониторю пулы ликвидности и присылаю сигналы в личку.\n"
+            "Спроси меня о чем угодно, например: *'Какая монета перспективная?'*"
         )
     
     tokens_pool = ["IEH", "Soloween", "Apex", "NovaX", "Vertex"]
@@ -45,11 +41,11 @@ def generate_ai_response(text):
     score = random.randint(65, 94)
     
     if score > 80:
-        recommendation = "Мощный приток ликвидности, выглядит перспективно для небольшой суммы."
+        recommendation = "Мощный приток ликвидности, выглядит перспективно."
     elif score > 70:
-        recommendation = "Умеренная активность, стоит понаблюдать за объемами торгов."
+        recommendation = "Умеренная активность, стоит понаблюдать."
     else:
-        recommendation = "Высокая волатильность и риски, лучше воздержаться."
+        recommendation = "Высокие риски, лучше воздержаться."
 
     return (
         f"🧠 *Анализ запроса:* «{text}»\n\n"
@@ -72,12 +68,10 @@ def send_telegram_message_to(chat_id, text):
 
 def check_new_tokens():
     while True:
-        print("Проверка новых токенов...", flush=True)
         try:
             url = "https://api.dexscreener.com/latest/dex/tokens/latest"
             headers = {"User-Agent": "Mozilla/5.0"}
             response = requests.get(url, headers=headers, timeout=10)
-            
             if response.status_code == 200:
                 data = response.json()
                 pairs = data.get("pairs", [])
@@ -88,9 +82,7 @@ def check_new_tokens():
                     name = base_token.get("name", "Unknown")
                     symbol = base_token.get("symbol", "???")
                     address = pair.get("address", "")
-                    
                     score = random.randint(80, 96)
-                    
                     message = (
                         f"*🤖 ИИ-Сигнал по новому токену!*\n\n"
                         f"Токен: *{name}* (${symbol})\n"
@@ -99,12 +91,10 @@ def check_new_tokens():
                         f"Оценка алгоритма: *{score} / 100*\n"
                         f"[DexScreener](https://dexscreener.com/{chain.lower()}/{address})"
                     )
-                    
                     for uid in active_users:
                         send_telegram_message_to(uid, message)
         except Exception as e:
             print(f"Ошибка API: {e}", flush=True)
-            
         time.sleep(300)
 
 def keep_alive():
@@ -113,7 +103,9 @@ def keep_alive():
         try:
             requests.get("https://roblik4.onrender.com/", timeout=10)
         except:
-            passdef set_webhook_url():
+            pass
+
+def set_webhook_url():
     time.sleep(4)
     webhook_url = "https://roblik4.onrender.com/webhook"
     url = f"https://api.telegram.org/bot{TOKEN}/setWebhook?url={webhook_url}"
@@ -121,7 +113,6 @@ def keep_alive():
         requests.get(url, timeout=5)
     except:
         pass
-
 if __name__ == "__main__":
     threading.Thread(target=set_webhook_url, daemon=True).start()
     threading.Thread(target=check_new_tokens, daemon=True).start()
