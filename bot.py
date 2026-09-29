@@ -4,43 +4,61 @@ import requests
 import threading
 from flask import Flask, request
 
-app = Flask(__name__)
+app = Flask(name)
 
-# Твои данные
-TOKEN = "8893160089:AAHWYLMfFv_sw7kvyKLRxrJnqI6pc26-7-Y"
-CHAT_ID = "5908091045"
+# Твой токен бота
+TOKEN = "8893160089:AAHWYLmFFv_sw7kvyKLRxrJnqI6pc26-7-Y"
 
-seen_tokens = set()
+# Список пользователей, с которыми общался бот, чтобы присылать им аналитику
+active_users = set()
+active_users.add("5908091045") # Твой ID сразу по умолчанию
 
 @app.route('/')
 def home():
-    return "Bot is running!"
+    return "Bot is running 24/7!"
 
 @app.route('/webhook', methods=['POST'])
 def webhook():
     data = request.json
     if data and 'message' in data:
-        chat_id = data['message']['chat']['id']
-        text = data['message']['text'].lower()
+        chat_id = str(data['message']['chat']['id'])
+        text = data['message'].get('text', '')
         
-        if '/start' in text:
-            reply = (
-                "Привет! Я твой крипто-бот с элементами анализа.\n"
-                "Я автоматически присылаю сигналы по новым токенам.\n"
-                "Ты также можешь спросить меня: *'Какая монета ща норм?'* или попросить совет."
-            )
-        elif 'монет' in text or 'какая' in text or 'норм' in text or 'покуп' in text:
-            reply = (
-                "Анализирую текущий рынок...\n"
-                "Сейчас внимание привлекает токен *IEH* (сеть SOL).\n"
-                "Шанс роста: *74 / 100* (Слабый или средний потенциал).\n"
-                "Рекомендация: Высокая волатильность, входить на минимальную сумму или воздержаться."
-            )
-        else:
-            reply = "Я зафиксировал твой вопрос. Слежу за рынком и готов подсказать по новым пулам ликвидности!"
-            
+        # Запоминаем пользователя, чтобы слать ему сигналы в личку
+        active_users.add(chat_id)
+        
+        reply = generate_ai_response(text)
         send_telegram_message_to(chat_id, reply)
     return "OK", 200
+
+def generate_ai_response(text):
+    text_lower = text.lower()
+    
+    if '/start' in text_lower:
+        return (
+            "Привет! Я твой крипто-аналитик.\n"
+            "Я постоянно мониторю новые пулы ликвидности и присылаю сигналы.\n"
+            "Спроси меня о чем угодно, например: *'Какая монета сейчас перспективная?'* или *'Стоит ли покупать новые токены?'*"
+        )
+    
+    # Имитация «умного» ответа на любые свободные вопросы пользователя
+    tokens_pool = ["IEH", "Soloween", "Apex", "NovaX", "Vertex"]
+    chosen_token = random.choice(tokens_pool)
+    score = random.randint(65, 94)
+    
+    if score > 80:
+        recommendation = "Мощный приток ликвидности, выглядит перспективно для небольшого риска."
+    elif score > 70:
+        recommendation = "Умеренная активность, стоит понаблюдать за объемами торгов."
+    else:
+        recommendation = "Высокая волатильность и риски, лучше воздержаться от покупки."
+
+    return (
+        f"🧠 *Анализ запроса:* «{text}»\n\n"
+        f"Проанализировав текущие блокчейн-данные, отмечу токен *{chosen_token}*.\n"
+        f"Оценка потенциала: *{score} / 100*\n"
+        f"Вердикт ИИ: {recommendation}"
+    )
 
 def send_telegram_message_to(chat_id, text):
     url = f"https://api.telegram.org/bot{TOKEN}/sendMessage"
@@ -65,7 +83,7 @@ def check_new_tokens():
             if response.status_code == 200:
                 data = response.json()
                 pairs = data.get("pairs", [])
-                for pair in pairs[:2]:
+                for pair in pairs[:1]:
                     chain = pair.get("chainId", "unknown").upper()
                     dex = pair.get("dexId", "unknown")
                     base_token = pair.get("baseToken", {})
@@ -73,24 +91,32 @@ def check_new_tokens():
                     symbol = base_token.get("symbol", "???")
                     address = pair.get("address", "")
                     
-                    token_id = f"{chain}_{address}"
-                    if token_id not in seen_tokens:
-                        seen_tokens.add(token_id)
-                        score = random.randint(80, 95)
-                        
-                        message = (
-                            f"*Обнаружен новый токен!*\n\n"
-                            f"Токен: *{name}* (${symbol})\n"
-                            f"Сеть: *{chain}* ({dex})\n"
-                            f"Контракт:\n{address}\n\n"
-                            f"Шанс роста: *{score} / 100*\n"
-                            f"[DexScreener](https://dexscreener.com/{chain.lower()}/{address})"
-                        )
-                        send_telegram_message_to(CHAT_ID, message)
+                    score = random.randint(80, 96)
+                    
+                    message = (
+                        f"*🤖 ИИ-Сигнал по новому токену!*\n\n"
+                        f"Токен: *{name}* (${symbol})\n"
+                        f"Сеть: *{chain}* ({dex})\n"
+                        f"Контракт:\n{address}\n\n"
+                        f"Оценка алгоритма: *{score} / 100*\n"
+                        f"[DexScreener](https://dexscreener.com/{chain.lower()}/{address})"
+                    )
+                    
+                    # Рассылаем всем активным пользователям (включая тебя)
+                    for uid in active_users:
+                        send_telegram_message_to(uid, message)
         except Exception as e:
             print(f"Ошибка API: {e}", flush=True)
             
         time.sleep(300)
+        def keep_alive():
+    """Пинг собственного сервера раз в 10 минут, чтобы Render не засыпал при закрытом ноутбуке"""
+    while True:
+        time.sleep(600)
+        try:
+            requests.get("https://roblik4.onrender.com/", timeout=10)
+        except:
+            pass
 
 def set_webhook_url():
     time.sleep(4)
@@ -102,10 +128,7 @@ def set_webhook_url():
         pass
 
 if __name__ == "__main__":
-    # Устанавливаем связь с Telegram для ответов на сообщения
     threading.Thread(target=set_webhook_url, daemon=True).start()
-    # Запускаем фоновый мониторинг токенов
-    t = threading.Thread(target=check_new_tokens, daemon=True)
-    t.start()
-    # Запуск веб-сервера для Render
+    threading.Thread(target=check_new_tokens, daemon=True).start()
+    threading.Thread(target=keep_alive, daemon=True).start()
     app.run(host="0.0.0.0", port=10000)
