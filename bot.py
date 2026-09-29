@@ -37,7 +37,7 @@ def send_telegram_message(text):
         print(f"Ошибка отправки: {e}")
 
 def check_new_tokens():
-    print("Проверка новых токенов...")
+    print("Проверка новых токенов...", flush=True)    
     try:
         url = "https://api.dexscreener.com/latest/dex/tokens/latest"
         response = requests.get(url)
