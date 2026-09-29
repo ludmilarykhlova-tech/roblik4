@@ -4,7 +4,7 @@ import requests
 import threading
 from flask import Flask, request
 
-app = Flask(name)
+app = Flask(__name__)
 
 # Твой токен бота
 TOKEN = "8893160089:AAHWYLmFFv_sw7kvyKLRxrJnqI6pc26-7-Y"
