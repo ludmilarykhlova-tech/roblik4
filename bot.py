@@ -40,7 +40,7 @@ def check_new_tokens():
     print("Проверка новых токенов...", flush=True)    
     try:
         url = "https://api.dexscreener.com/latest/dex/tokens/latest"
-        response = requests.get(url)
+        response = requests.get(url, timeout=10)        
         data = response.json()
         
         pairs = data.get("pairs", [])
