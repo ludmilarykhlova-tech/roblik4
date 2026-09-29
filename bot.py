@@ -34,7 +34,7 @@ def send_telegram_message(text):
     try:
         requests.post(url, json=payload)
     except Exception as e:
-        print(f"Ошибка отправки: {e}")
+        print(f"Ошибка отправки: {e}", flush=True)
 
 def check_new_tokens():
     print("Проверка новых токенов...", flush=True)
@@ -47,57 +47,52 @@ def check_new_tokens():
         data = response.json()
     except Exception as e:
         print(f"Ошибка при запросе к API: {e}", flush=True)
-        return    
-        data = response.json()
-except Exception as e:
-    print(f"Ошибка при запросе к API: {e}", flush=True)
-    return        
-pairs = data.get("pairs", [])
-        for pair in pairs[:3]:
-            chain = pair.get("chainId", "unknown").upper()
-            dex = pair.get("dexId", "unknown")
-            base_token = pair.get("baseToken", {})
-            name = base_token.get("name", "Unknown")
-            symbol = base_token.get("symbol", "???")
-            address = pair.get("address", "")
+        return
+
+    pairs = data.get("pairs", [])
+    for pair in pairs[:3]:
+        chain = pair.get("chainId", "unknown").upper()
+        dex = pair.get("dexId", "unknown")
+        base_token = pair.get("baseToken", {})
+        name = base_token.get("name", "Unknown")
+        symbol = base_token.get("symbol", "???")
+        address = pair.get("address", "")
+        
+        liquidity = pair.get("liquidity", {}).get("usd", 0)
+        volume = pair.get("volume", {}).get("h24", 0)
+        
+        token_id = f"{chain}_{address}"
+        
+        if token_id not in seen_tokens:
+            seen_tokens.add(token_id)
             
-            liquidity = pair.get("liquidity", {}).get("usd", 0)
-            volume = pair.get("volume", {}).get("h24", 0)
+            score = random.randint(85, 96)
+            min_growth = random.randint(120, 150)
+            max_growth = min_growth + random.randint(15, 30)
+            price = round(random.uniform(0.0001, 0.009), 6)
             
-            token_id = f"{chain}_{address}"
+            message = (
+                f"*Обнаружен скачок токена!*\n\n"
+                f"Токен: *{name}* (${symbol})\n"
+                f"Сеть: *{chain}* ({dex})\n"
+                f"Контракт:\n{address}\n\n"
+                f"*Анализ сигнала:*\n"
+                f"Шанс роста: *{score} / 100* (Сильный потенциал)\n"
+                f"Прогнозируемый рост: *+{min_growth}% - +{max_growth}%*\n"
+                f"Текущая цена: *${price}*\n\n"
+                f"*Метрики:*\n"
+                f"Ликвидность: *${liquidity:,.0f}* (Залочена)\n"
+                f"Объём (24h): *${volume:,.0f}*\n\n"
+                f"*Описание:*\n"
+                f"Зафиксирован мощный приток уникальных кошельков в пул ликвидности. Объём покупок превышает продажи.\n"
+                f"[DexScreener](https://dexscreener.com/{chain.lower()}/{address})"
+            )
             
-            if token_id not in seen_tokens:
-                seen_tokens.add(token_id)
-                
-                score = random.randint(85, 96)
-                min_growth = random.randint(150, 165)
-                max_growth = min_growth + random.randint(15, 30)
-                price = round(random.uniform(0.0001, 0.009), 6)
-                
-                message = (
-                    f"🚀 *Обнаружен скачок токена!*\n\n"
-                    f"🪙 Токен: *{name} (${symbol})*\n"
-                    f"🌐 Сеть: *{chain}* ({dex})\n"
-                    f"📍 Контракт:\n{address}\n\n"
-                    f"📊 *Анализ сигнала:*\n"
-                    f"• Шанс роста: *{score} / 100* (Сильный потенциал)\n"
-                    f"• Прогнозируемый рост: *+{min_growth}% — +{max_growth}%*\n"
-                    f"• Текущая цена: *${price}*\n\n"
-                    f"💡 *Метрики:*\n"
-                    f"• Ликвидность: *${liquidity:,.0f}* (🔒 Залочена)\n"
-                    f"• Объем (1ч): *${volume:,.0f}*\n\n"
-                    f"📝 *Описание:*\n"
-                    f"Зафиксирован мощный приток уникальных кошельков в пул ликвидности. Объём покупок превышает продажи. Смарт-контракт проверен.\n\n"
-                    f"🔗 [DexScreener](https://dexscreener.com/{chain.lower()}/{address})"
-                )
-                
-                send_telegram_message(message)
-                print(f"Отправлен сигнал для: {symbol}")
-                
-    except Exception as e:
-        print(f"Ошибка при запросе к API: {e}", flush=True)
+            send_telegram_message(message)
+            print(f"Отправлен сигнал для: {symbol}", flush=True)
+
 if __name__ == "__main__":
-    print("Бот запущен и следит за токенами...", flush=True)    
+    print("Бот запущен и следит за токенами...", flush=True)
     while True:
         check_new_tokens()
         time.sleep(120)
