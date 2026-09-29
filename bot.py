@@ -39,11 +39,16 @@ def send_telegram_message(text):
 def check_new_tokens():
     print("Проверка новых токенов...", flush=True)    
     try:
-        url = "https://api.dexscreener.com/latest/dex/tokens/latest"
-        response = requests.get(url, timeout=10)        
-        data = response.json()
-        
-        pairs = data.get("pairs", [])
+    url = "https://api.dexscreener.com/latest/dex/tokens/latest"
+    response = requests.get(url, timeout=10)
+    if response.status_code != 200:
+        print(f"Сайт ответил со статусом: {response.status_code}", flush=True)
+        return
+    data = response.json()
+except Exception as e:
+    print(f"Ошибка при запросе к API: {e}", flush=True)
+    return        
+pairs = data.get("pairs", [])
         for pair in pairs[:3]:
             chain = pair.get("chainId", "unknown").upper()
             dex = pair.get("dexId", "unknown")
