@@ -86,10 +86,9 @@ def check_new_tokens():
                 print(f"Отправлен сигнал для: {symbol}")
                 
     except Exception as e:
-        print(f"Ошибка при запросе к API: {e}")
-
+        print(f"Ошибка при запросе к API: {e}", flush=True)
 if __name__ == "__main__":
-    print("Бот запущен и следит за токенами...")
+    print("Бот запущен и следит за токенами...", flush=True)    
     while True:
         check_new_tokens()
         time.sleep(120)
