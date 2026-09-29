@@ -40,7 +40,8 @@ def check_new_tokens():
     print("Проверка новых токенов...", flush=True)
     try:
         url = "https://api.dexscreener.com/latest/dex/tokens/latest"
-        response = requests.get(url, timeout=10)
+        headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
+        response = requests.get(url, headers=headers, timeout=10)
         if response.status_code != 200:
             print(f"Сайт ответил со статусом: {response.status_code}", flush=True)
             return
@@ -95,4 +96,4 @@ if __name__ == "__main__":
     print("Бот запущен и следит за токенами...", flush=True)
     while True:
         check_new_tokens()
-        time.sleep(120)
+        time.sleep(300)  # Увеличили паузу до 5 минут
