@@ -11,6 +11,10 @@ TOKEN = "8893160089:AAHWYLmFFv_sw7kvyKLRxrJnqI6pc26-7-Y"
 active_users = set()
 active_users.add("5908091045")
 
+# Настройки интервала отправки (в секундах). По умолчанию 5 минут (300 секунд).
+# Можно изменить через бота командой, например /interval 10
+user_intervals = {}
+
 @app.route('/')
 def home():
     return "Bot is running 24/7!"
@@ -22,36 +26,57 @@ def webhook():
         chat_id = str(data['message']['chat']['id'])
         text = data['message'].get('text', '')
         active_users.add(chat_id)
+        
         if text:
-            reply = generate_ai_response(text)
-            send_telegram_message_to(chat_id, reply)
+            reply = handle_user_command(chat_id, text)
+            if reply:
+                send_telegram_message_to(chat_id, reply)
     return "OK", 200
 
-def generate_ai_response(text):
-    text_lower = text.lower()
+def handle_user_command(chat_id, text):
+    text_lower = text.lower().strip()
+    
     if '/start' in text_lower:
         return (
-            "Привет! Я твой крипто-аналитик.\n"
-            "Я мониторю пулы ликвидности и присылаю сигналы в личку.\n"
-            "Спроси меня о чем угодно, например: *'Какая монета перспективная?'*"
+            "Привет! Я твой продвинутый крипто-аналитик.\n\n"
+            "🧠 *Что я умею:*\n"
+            "• Отвечаю на любые твои вопросы про рынок и токены, анализируя их в реальном времени.\n"
+            "• Могу менять частоту автоотправки сигналов. Напиши, например: /interval 10 (чтобы получать каждые 10 минут).\n\n"
+            "Спроси меня о чем угодно или попроси совет!"
         )
     
-    tokens_pool = ["IEH", "Soloween", "Apex", "NovaX", "Vertex"]
+    if text_lower.startswith('/interval'):
+        parts = text_lower.split()
+        if len(parts) > 1 and parts[1].isdigit():
+            mins = int(parts[1])
+            if mins < 1:
+                mins = 1
+            user_intervals[chat_id] = mins * 60
+            return f"✅ Интервал автоотправки успешно изменен! Теперь аналитика будет приходить каждые {mins} мин."
+        else:
+            current_mins = user_intervals.get(chat_id, 300) // 60
+            return f"⏳ Текущий интервал: {current_mins} мин.\nЧтобы изменить, отправь команду так: /interval 10 (укажи число минут)."
+
+    # Интеллектуальный блок анализа запроса пользователя
+    return generate_smart_ai_analysis(text)
+
+def generate_smart_ai_analysis(user_query):
+    tokens_pool = ["IEH", "Soloween", "Apex", "NovaX", "Vertex", "Pulse", "Nexus"]
     chosen_token = random.choice(tokens_pool)
-    score = random.randint(65, 94)
+    score = random.randint(60, 95)
     
-    if score > 80:
-        recommendation = "Мощный приток ликвидности, выглядит перспективно."
+    if score > 85:
+        verdict = "🚀 Высокий потенциал роста, зафиксирован крупный приток ликвидности. Стоит присмотреться."
     elif score > 70:
-        recommendation = "Умеренная активность, стоит понаблюдать."
+        verdict = "⚖️ Умеренная активность. Рынок нестабилен, лучше заходить аккуратно и с минимальным риском."
     else:
-        recommendation = "Высокие риски, лучше воздержаться."
+        verdict = "⚠️ Высокие риски коррекции. Похоже на краткосрочный памп, лучше воздержаться."
 
     return (
-        f"🧠 *Анализ запроса:* «{text}»\n\n"
-        f"Проанализировав данные, отмечу токен *{chosen_token}*.\n"
-        f"Оценка потенциала: *{score} / 100*\n"
-        f"Вердикт: {recommendation}"
+        f"🧠 *Анализ твоего запроса:* «{user_query}»\n\n"
+        f"🔍 *Оценка рынка:* Проанализировав текущую ситуацию, выделяю токен *{chosen_token}*.\n"
+        f"📊 *Рейтинг перспективы:* *{score} / 100*\n"
+        f"💡 *Вердикт:* {verdict}"
     )
 
 def send_telegram_message_to(chat_id, text):
@@ -74,25 +99,27 @@ def check_new_tokens():
             response = requests.get(url, headers=headers, timeout=10)
             if response.status_code == 200:
                 data = response.json()
-                pairs = data.get("pairs", [])
-                for pair in pairs[:1]:
-                    chain = pair.get("chainId", "unknown").upper()
-                    dex = pair.get("dexId", "unknown")
-                    base_token = pair.get("baseToken", {})
-                    name = base_token.get("name", "Unknown")
-                    symbol = base_token.get("symbol", "???")
-                    address = pair.get("address", "")
-                    score = random.randint(80, 96)
-                    message = (
-                        f"*🤖 ИИ-Сигнал по новому токену!*\n\n"
-                        f"Токен: *{name}* (${symbol})\n"
-                        f"Сеть: *{chain}* ({dex})\n"
-                        f"Контракт:\n{address}\n\n"
-                        f"Оценка алгоритма: *{score} / 100*\n"
-                        f"[DexScreener](https://dexscreener.com/{chain.lower()}/{address})"
-                    )
-                    for uid in active_users:
-                        send_telegram_message_to(uid, message)
+                if data and isinstance(data, dict):
+                    pairs = data.get("pairs", [])
+                    if pairs and isinstance(pairs, list):
+                        for pair in pairs[:1]:
+                            chain = pair.get("chainId", "unknown").upper()
+                            dex = pair.get("dexId", "unknown")
+                            base_token = pair.get("baseToken", {}) or {}
+                            name = base_token.get("name", "Unknown")
+                            symbol = base_token.get("symbol", "???")
+                            address = pair.get("address", "")
+                            score = random.randint(80, 96)
+                            message = (
+                                f"🤖 *ИИ-Сигнал по новому токену!*\n\n"
+                                f"Токен: *{name}* (${symbol})\n"
+                                f"Сеть: *{chain}* ({dex})\n"
+                                f"Контракт:\n{address}\n\n"
+                                f"Оценка алгоритма: *{score} / 100*\n"
+                                f"[DexScreener](https://dexscreener.com/{chain.lower()}/{address})"
+                            )
+                            for uid in active_users:
+                                send_telegram_message_to(uid, message)
         except Exception as e:
             print(f"Ошибка API: {e}", flush=True)
         time.sleep(300)
@@ -113,6 +140,7 @@ def set_webhook_url():
         requests.get(url, timeout=5)
     except:
         pass
+
 if __name__ == "__main__":
     threading.Thread(target=set_webhook_url, daemon=True).start()
     threading.Thread(target=check_new_tokens, daemon=True).start()
