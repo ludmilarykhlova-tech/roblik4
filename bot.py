@@ -6,16 +6,14 @@ from flask import Flask, request
 
 app = Flask(__name__)
 
-TOKEN = "8893160089:AAHWYLMfFv_sw7kvyKLRxrJnqI6pc26-7-Y"
-# Список активных пользователей (добавляются автоматически при обращении)
-active_users = set()
+TOKEN = "8893160089:AAHWYLmFFv_sw7kvyKLRxrJnqI6pc26-7-Y"
 
-# Словарь для хранения индивидуальных интервалов (chat_id: секунды)
+active_users = set()
 user_intervals = {}
 
 @app.route('/')
 def home():
-    return "Bot is running 24/7!"
+    return "AI Crypto Bot is running 24/7!"
 
 @app.route('/webhook', methods=['POST'])
 def webhook():
@@ -36,11 +34,10 @@ def handle_user_command(chat_id, text):
     
     if '/start' in text_lower:
         return (
-            "Привет! Я твой крипто-аналитик.\n\n"
+            "Привет! Я твой ИИ-криптоаналитик на базе нейросети.\n\n"
             "Что я умею:\n"
-            "• Отвечаю на любые вопросы по рынку и монетам.\n"
-            "• Понимаю команду настройки частоты, например: /interval 10 (буду присылать аналитику каждые 10 минут).\n\n"
-            "Напиши мне любой вопрос или название монеты!"
+            "• Отвечаю на любые вопросы про монеты и рынок живым языком.\n"
+            "• Настраиваю интервалы: напиши, например, /interval 10 для получения аналитики каждые 10 минут."
         )
     
     if text_lower.startswith('/interval'):
@@ -50,32 +47,33 @@ def handle_user_command(chat_id, text):
             if mins < 1:
                 mins = 1
             user_intervals[chat_id] = mins * 60
-            return f"Интервал автоотправки изменен! Теперь аналитика будет приходить каждые {mins} мин."
+            return f"Интервал обновлен! Буду присылать аналитику каждые {mins} мин."
         else:
             current_mins = user_intervals.get(chat_id, 300) // 60
-            return f"Текущий интервал: {current_mins} мин. Чтобы изменить, отправь команду так: /interval 10"
+            return f"Текущий интервал: {current_mins} мин. Пример команды: /interval 10"
 
-    # Умный встроенный анализ запроса
-    return generate_smart_analysis(text)
+    # Запрос к бесплатной публичной нейросети
+    return ask_free_ai(text)
 
-def generate_smart_analysis(query):
-    tokens_pool = ["Bitcoin (BTC)", "Ethereum (ETH)", "Solana (SOL)", "IEH", "Apex", "NovaX"]
-    chosen_token = random.choice(tokens_pool)
-    score = random.randint(65, 95)
+def ask_free_ai(prompt):
+    try:
+        # Используем открытый эндпоинт для генерации осмысленного ответа
+        url = "https://text.pollinations.ai/"
+        payload = {
+            "messages": [
+                {"role": "system", "content": "Ты профессиональный крипто-аналитик. Отвечай кратко, экспертно, с оценкой рынка и вердиктом на русском языке."},
+                {"role": "user", "content": prompt}
+            ],
+            "model": "openai",
+            "seed": random.randint(1, 1000)
+        }
+        response = requests.post(url, json=payload, timeout=15)
+        if response.status_code == 200:
+            return response.text.strip()
+    except Exception as e:
+        print(f"AI Error: {e}", flush=True)
     
-    if score > 85:
-        verdict = "Высокий потенциал роста, зафиксирован крупный приток ликвидности. Стоит присмотреться."
-    elif score > 70:
-        verdict = "Умеренная активность. Рынок нестабилен, лучше заходить аккуратно."
-    else:
-        verdict = "Высокие риски коррекции, лучше воздержаться."
-
-    return (
-        f"Анализ запроса: «{query}»\n\n"
-        f"Выделенный актив: *{chosen_token}*\n"
-        f"Оценка перспективы: *{score} / 100*\n"
-        f"Вердикт: {verdict}"
-    )
+    return "🧠 Анализ рынка: текущая волатильность в норме, следи за уровнями ликвидности и объемами торгов."
 
 def send_telegram_message_to(chat_id, text):
     url = f"https://api.telegram.org/bot{TOKEN}/sendMessage"
@@ -109,15 +107,17 @@ def check_new_tokens():
                             address = pair.get("address", "")
                             score = random.randint(80, 96)
                             message = (
-                                f"Сигнал по новому токену!\n\n"
+                                f"🚨 *Сигнал по новому токену!*\n\n"
                                 f"Токен: *{name}* (${symbol})\n"
                                 f"Сеть: *{chain}* ({dex})\n"
                                 f"Контракт:\n{address}\n\n"
-                                f"Оценка алгоритма: *{score} / 100*\n"
+                                f"Оценка: *{score} / 100*\n"
                                 f"[DexScreener](https://dexscreener.com/{chain.lower()}/{address})"
                             )
                             for uid in list(active_users):
+                                interval = user_intervals.get(uid, 300)
                                 send_telegram_message_to(uid, message)
+                                time.sleep(1)
         except Exception as e:
             print(f"Ошибка API: {e}", flush=True)
         time.sleep(300)
