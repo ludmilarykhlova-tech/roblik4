@@ -6,8 +6,7 @@ from flask import Flask, request
 
 app = Flask(__name__)
 
-TOKEN = "8893160089:AAHWYLmFFv_sw7kvyKLRxrJnqI6pc26-7-Y"
-
+TOKEN = "8893160089:AAHWYLMfFv_sw7kvyKLRxrJnqI6pc26-7-Y"
 # Список активных пользователей (добавляются автоматически при обращении)
 active_users = set()
 
