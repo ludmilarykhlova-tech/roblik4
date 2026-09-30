@@ -64,7 +64,8 @@ def ask_openrouter_ai(prompt):
         "X-Title": "CryptoBot"
     }
     payload = {
-        "model": "google/gemma-2-9b-it:free",  # Используем бесплатную модель на OpenRouter
+        "model": "deepseek/deepseek-chat:free",        ,  
+        # Используем бесплатную модель на OpenRouter
         "messages": [
             {"role": "system", "content": "Ты профессиональный крипто-аналитик. Отвечай кратко, экспертно, на русском языке, без воды и рекламы."},
             {"role": "user", "content": prompt}
