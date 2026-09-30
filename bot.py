@@ -139,16 +139,16 @@ def keep_alive():
             pass
 
 def set_webhook_url():
-    time.sleep(4)
     webhook_url = "https://roblik4.onrender.com/webhook"
     url = f"https://api.telegram.org/bot{TOKEN}/setWebhook?url={webhook_url}"
     try:
-        requests.get(url, timeout=5)
-    except:
-        pass
+        response = requests.get(url, timeout=10)
+        print(f"Авто-настройка вебхука: {response.text}", flush=True)
+    except Exception as e:
+        print(f"Ошибка настройки вебхука: {e}", flush=True)
 
 if __name__ == "__main__":
-    threading.Thread(target=set_webhook_url, daemon=True).start()
+    set_webhook_url()
     threading.Thread(target=check_new_tokens, daemon=True).start()
     threading.Thread(target=keep_alive, daemon=True).start()
     app.run(host="0.0.0.0", port=10000)
