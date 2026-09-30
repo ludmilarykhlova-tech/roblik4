@@ -10,7 +10,7 @@ app = Flask(__name__)
 TOKEN = "8893160089:AAHWYLmFFv_sw7kvyKLRxrJnqI6pc26-7-Y"
 
 # Твой рабочий ключ Gemini
-GEMINI_API_KEY = "AQ.Ab8RN6IPINijLXdo0nunMzwJwgHHdxQ5cmIbZBNMj31fB2ST_g
+GEMINI_API_KEY = "AQ.Ab8RN6IPINijLXdo0nunMzwJwgHHdxQ5cmIbZBNMj31fB2ST_g"
 
 active_users = set()
 user_intervals = {}
