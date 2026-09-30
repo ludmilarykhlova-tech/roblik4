@@ -3,16 +3,23 @@ import random
 import requests
 import threading
 from flask import Flask, request
+from google import genai
 
 app = Flask(__name__)
 
-TOKEN = "8893160089:AAHWYLMfFv_sw7kvyKLRxrJnqI6pc26-7-Y"
+TOKEN = "8893160089:AAHWYLmFFv_sw7kvyKLRxrJnqI6pc26-7-Y"
+
+# 🔑 ВСКРОЙ КОВШИК И ВСТАВЬ КЛЮЧ МЕЖДУ КАВЫЧКАМИ НИЖЕ:
+GEMINI_API_KEY = "AQ.Ab8RN6IPINijLXdo0nunMzwJwgHHdxQ5cmIbZBNMj31fB2ST_g"
+# Инициализация официального клиента Gemini
+ai_client = genai.Client(api_key=GEMINI_API_KEY) if GEMINI_API_KEY != "СЮДА_ВСТАВЬ_СВОЙ_КЛЮЧ" else None
+
 active_users = set()
 user_intervals = {}
 
 @app.route('/')
 def home():
-    return "AI Crypto Bot is running 24/7!"
+    return "Gemini Crypto Bot is running 24/7!"
 
 @app.route('/webhook', methods=['POST'])
 def webhook():
@@ -33,10 +40,10 @@ def handle_user_command(chat_id, text):
     
     if '/start' in text_lower:
         return (
-            "Привет! Я твой ИИ-криптоаналитик на базе нейросети.\n\n"
+            "Привет! Я твой крипто-аналитик на базе официальной нейросети Gemini.\n\n"
             "Что я умею:\n"
-            "• Отвечаю на любые вопросы про монеты и рынок живым языком.\n"
-            "• Настраиваю интервалы: напиши, например, /interval 10 для получения аналитики каждые 10 минут."
+            "• Живо и умно отвечаю на любые вопросы по рынку.\n"
+            "• Настраиваю интервалы: отправь /interval 10, чтобы получать аналитику каждые 10 минут."
         )
     
     if text_lower.startswith('/interval'):
@@ -51,28 +58,24 @@ def handle_user_command(chat_id, text):
             current_mins = user_intervals.get(chat_id, 300) // 60
             return f"Текущий интервал: {current_mins} мин. Пример команды: /interval 10"
 
-    # Запрос к бесплатной публичной нейросети
-    return ask_free_ai(text)
+    # Запрос к официальной нейросети Gemini
+    return ask_gemini_ai(text)
 
-def ask_free_ai(prompt):
+def ask_gemini_ai(prompt):
+    if not ai_client:
+        return "⚠️ В коде бота не указан API-ключ Gemini!"
+    
     try:
-        # Используем открытый эндпоинт для генерации осмысленного ответа
-        url = "https://text.pollinations.ai/"
-        payload = {
-            "messages": [
-                {"role": "system", "content": "Ты профессиональный крипто-аналитик. Отвечай кратко, экспертно, с оценкой рынка и вердиктом на русском языке."},
-                {"role": "user", "content": prompt}
-            ],
-            "model": "openai",
-            "seed": random.randint(1, 1000)
-        }
-        response = requests.post(url, json=payload, timeout=15)
-        if response.status_code == 200:
+        response = ai_client.models.generate_content(
+            model='gemini-2.5-flash',
+            contents=f"Ты профессиональный крипто-аналитик. Отвечай кратко, экспертно, с оценкой рынка и вердиктом на русском языке. Запрос пользователя: {prompt}",
+        )
+        if response and response.text:
             return response.text.strip()
     except Exception as e:
-        print(f"AI Error: {e}", flush=True)
+        print(f"Gemini API Error: {e}", flush=True)
     
-    return "🧠 Анализ рынка: текущая волатильность в норме, следи за уровнями ликвидности и объемами торгов."
+    return "🧠 Анализ рынка: высокая волатильность, следи за объемами ликвидности."
 
 def send_telegram_message_to(chat_id, text):
     url = f"https://api.telegram.org/bot{TOKEN}/sendMessage"
@@ -114,7 +117,6 @@ def check_new_tokens():
                                 f"[DexScreener](https://dexscreener.com/{chain.lower()}/{address})"
                             )
                             for uid in list(active_users):
-                                interval = user_intervals.get(uid, 300)
                                 send_telegram_message_to(uid, message)
                                 time.sleep(1)
         except Exception as e:
