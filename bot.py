@@ -82,7 +82,6 @@ def handle_user_command(chat_id, text):
 
 def telegram_polling():
     offset = 0
-    # Очищаем старый вебхук при старте
     try:
         requests.get(f"https://api.telegram.org/bot{TOKEN}/deleteWebhook?drop_pending_updates=true", timeout=5)
     except:
