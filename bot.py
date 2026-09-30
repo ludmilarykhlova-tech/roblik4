@@ -6,9 +6,11 @@ from flask import Flask, request
 
 app = Flask(__name__)
 
-TOKEN = "8893160089:AAEvBfpsanyjvXWj61ueXA-YAyN4FIVjDoc"
-# Вставь сюда свой новый ключ с OpenRouter (начинается на sk-or-v1-...)
+TOKEN = "8893160089:AAHWYLmFFv_sw7kvyKLRxrJnqI6pc26-7-Y"
+
+# Твой рабочий ключ OpenRouter
 OPENROUTER_API_KEY = "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"
+
 active_users = set()
 user_intervals = {}
 
@@ -64,8 +66,7 @@ def ask_openrouter_ai(prompt):
         "X-Title": "CryptoBot"
     }
     payload = {
-        "model": "deepseek/deepseek-chat:free",        ,  
-        # Используем бесплатную модель на OpenRouter
+        "model": "deepseek/deepseek-chat:free",  # Используем бесплатную модель на OpenRouter
         "messages": [
             {"role": "system", "content": "Ты профессиональный крипто-аналитик. Отвечай кратко, экспертно, на русском языке, без воды и рекламы."},
             {"role": "user", "content": prompt}
