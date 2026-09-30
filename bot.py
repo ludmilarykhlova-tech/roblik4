@@ -3,21 +3,19 @@ import random
 import requests
 import threading
 from flask import Flask, request
-from google import genai
 
 app = Flask(__name__)
 
 TOKEN = "8893160089:AAHWYLmFFv_sw7kvyKLRxrJnqI6pc26-7-Y"
 
-# Твой рабочий ключ Gemini
-GEMINI_API_KEY = "AQ.Ab8RN6IPINijLXdo0nunMzwJwgHHdxQ5cmIbZBNMj31fB2ST_g"
-
+# Вставь сюда свой новый ключ с OpenRouter (начинается на sk-or-v1-...)
+OPENROUTER_API_KEY = "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"
 active_users = set()
 user_intervals = {}
 
 @app.route('/')
 def home():
-    return "Gemini Crypto Bot is running 24/7!"
+    return "OpenRouter Crypto Bot is running 24/7!"
 
 @app.route('/webhook', methods=['POST'])
 def webhook():
@@ -38,10 +36,10 @@ def handle_user_command(chat_id, text):
     
     if '/start' in text_lower:
         return (
-            "Привет! Я твой крипто-аналитик на базе официальной нейросети Gemini.\n\n"
+            "Привет! Я твой крипто-аналитический бот на базе OpenRouter.\n\n"
             "Что я умею:\n"
-            "• Умно отвечаю на любые вопросы по рынку.\n"
-            "• Настраиваю интервалы: отправь /interval 10, чтобы получать аналитику каждые 10 минут."
+            "• Отвечаю на любые вопросы по рынку через ИИ.\n"
+            "• Настраивай интервалы: отправь /interval 10, чтобы получать аналитику каждые 10 минут."
         )
     
     if text_lower.startswith('/interval'):
@@ -56,23 +54,34 @@ def handle_user_command(chat_id, text):
             current_mins = user_intervals.get(chat_id, 300) // 60
             return f"Текущий интервал: {current_mins} мин. Пример команды: /interval 10"
 
-    return ask_gemini_ai(text)
+    return ask_openrouter_ai(text)
 
-def ask_gemini_ai(prompt):
-    if not ai_client:
-        return "⚠️ В коде бота не указан API-ключ Gemini!"
-    
+def ask_openrouter_ai(prompt):
+    url = "https://openrouter.ai/api/v1/chat/completions"
+    headers = {
+        "Authorization": f"Bearer {OPENROUTER_API_KEY}",
+        "Content-Type": "application/json",
+        "HTTP-Referer": "https://github.com/roblik4",
+        "X-Title": "CryptoBot"
+    }
+    payload = {
+        "model": "google/gemma-2-9b-it:free",  # Используем бесплатную модель на OpenRouter
+        "messages": [
+            {"role": "system", "content": "Ты профессиональный крипто-аналитик. Отвечай кратко, экспертно, на русском языке, без воды и рекламы."},
+            {"role": "user", "content": prompt}
+        ]
+    }
     try:
-        response = ai_client.models.generate_content(
-            model='gemini-2.5-flash',
-            contents=f"Ты профессиональный крипто-аналитик. Отвечай кратко, экспертно, на русском языке. Запрос: {prompt}",
-        )
-        if response and response.text:
-            return response.text.strip()
+        response = requests.post(url, json=payload, headers=headers, timeout=15)
+        if response.status_code == 200:
+            res_data = response.json()
+            return res_data['choices'][0]['message']['content'].strip()
+        else:
+            print(f"OpenRouter Error Code {response.status_code}: {response.text}", flush=True)
     except Exception as e:
-        print(f"Gemini API Error: {e}", flush=True)
+        print(f"OpenRouter API Error: {e}", flush=True)
     
-    return "🧠 Анализ рынка: высокая волатильность, следи за объемами."
+    return "📊 Анализ рынка: высокая волатильность, следи за объемами."
 
 def send_telegram_message_to(chat_id, text):
     url = f"https://api.telegram.org/bot{TOKEN}/sendMessage"
