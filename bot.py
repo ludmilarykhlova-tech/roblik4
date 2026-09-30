@@ -9,10 +9,10 @@ app = Flask(__name__)
 
 TOKEN = "8893160089:AAHWYLmFFv_sw7kvyKLRxrJnqI6pc26-7-Y"
 
-# 🔑 ВСКРОЙ КОВШИК И ВСТАВЬ КЛЮЧ МЕЖДУ КАВЫЧКАМИ НИЖЕ:
-GEMINI_API_KEY = "AQ.Ab8RN6IPINijLXdo0nunMzwJwgHHdxQ5cmIbZBNMj31fB2ST_g"
-# Инициализация официального клиента Gemini
-ai_client = genai.Client(api_key=GEMINI_API_KEY) if GEMINI_API_KEY != "СЮДА_ВСТАВЬ_СВОЙ_КЛЮЧ" else None
+# Твой рабочий ключ Gemini
+GEMINI_API_KEY = "ЗДЕСЬ_ВСТАВЬ_СВОЙ_КЛЮЧ"
+
+ai_client = genai.Client(api_key=GEMINI_API_KEY) if GEMINI_API_KEY != "ЗДЕСЬ_ВСТАВЬ_СВОЙ_КЛЮЧ" else None
 
 active_users = set()
 user_intervals = {}
@@ -42,7 +42,7 @@ def handle_user_command(chat_id, text):
         return (
             "Привет! Я твой крипто-аналитик на базе официальной нейросети Gemini.\n\n"
             "Что я умею:\n"
-            "• Живо и умно отвечаю на любые вопросы по рынку.\n"
+            "• Умно отвечаю на любые вопросы по рынку.\n"
             "• Настраиваю интервалы: отправь /interval 10, чтобы получать аналитику каждые 10 минут."
         )
     
@@ -58,7 +58,6 @@ def handle_user_command(chat_id, text):
             current_mins = user_intervals.get(chat_id, 300) // 60
             return f"Текущий интервал: {current_mins} мин. Пример команды: /interval 10"
 
-    # Запрос к официальной нейросети Gemini
     return ask_gemini_ai(text)
 
 def ask_gemini_ai(prompt):
@@ -68,14 +67,14 @@ def ask_gemini_ai(prompt):
     try:
         response = ai_client.models.generate_content(
             model='gemini-2.5-flash',
-            contents=f"Ты профессиональный крипто-аналитик. Отвечай кратко, экспертно, с оценкой рынка и вердиктом на русском языке. Запрос пользователя: {prompt}",
+            contents=f"Ты профессиональный крипто-аналитик. Отвечай кратко, экспертно, на русском языке. Запрос: {prompt}",
         )
         if response and response.text:
             return response.text.strip()
     except Exception as e:
         print(f"Gemini API Error: {e}", flush=True)
     
-    return "🧠 Анализ рынка: высокая волатильность, следи за объемами ликвидности."
+    return "🧠 Анализ рынка: высокая волатильность, следи за объемами."
 
 def send_telegram_message_to(chat_id, text):
     url = f"https://api.telegram.org/bot{TOKEN}/sendMessage"
